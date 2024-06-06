@@ -14,7 +14,8 @@ class DataStudentinfo(models.Model):
 
 
 class DataSubmitrecord(models.Model):
-    index = models.IntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
+    index = models.IntegerField(blank=True, null=True)
     class_field = models.TextField(db_column='class', blank=True,
                                    null=True)  # Field renamed because it was a Python reserved word.
     time = models.IntegerField(blank=True, null=True)
@@ -41,3 +42,36 @@ class DataTitleinfo(models.Model):
     class Meta:
         managed = False
         db_table = 'Data_TitleInfo'
+
+
+class StudentInfo(models.Model):
+    index = models.IntegerField(primary_key=True)
+    student_id = models.TextField(blank=True, null=True)
+    sex = models.TextField(blank=True, null=True)
+    age = models.IntegerField()
+    major = models.TextField(blank=True, null=True)
+    class_field = models.TextField(db_column='class', blank=True,
+                                   null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'StudentInfo'
+
+
+class KnowledgeInfo(models.Model):
+    knowledge = models.TextField(primary_key=True)
+    title_count = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'KnowledgeInfo'
+
+
+class SubKnowledgeInfo(models.Model):
+    sub_knowledge = models.TextField(primary_key=True)
+    knowledge = models.TextField()
+    title_count = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'SubKnowledgeInfo'
