@@ -351,6 +351,54 @@ def student_submit_record(request, student_id):
     return JsonResponse({'error': 1, 'msg': 'Invalid request method'})
 
 
+# 按knowledge划分统计，取所有学生最后一次提交，统计每个knowledge通过的人数、部分通过的人数、出错的人数
+
+@csrf_exempt
+def submit_knowledge(request):
+    if request.method == 'GET':
+        submit_records = DataSubmitrecord.objects.all()
+        if not submit_records.exists():
+            return JsonResponse({'error': 1, 'msg': 'No submit records'})
+        # 对于提交按学生ID分组，只保留time最大的记录
+        last_record_times = (
+            submit_records.values('student_id', 'title_id')
+            .annotate(max_time=Max('time'))
+            .values('max_time')
+        )
+        submit_records = submit_records.filter(time__in=Subquery(last_record_times))
+        # 统计submit_records中的每一条记录，计算每个knowledge的score为满分的次数，部分分的次数，以及0分的次数
+        knowledge_submit_count = {}
+        for record in submit_records:
+            knowledge = DataTitleinfo.objects.filter(title_id=record.title_id).values_list('knowledge', flat=True)
+            for know in knowledge:
+                if know not in knowledge_submit_count:
+                    knowledge_submit_count[know] = {
+                        'ac': 0,
+                        'partial_ac': 0,
+                        'error': 0
+                    }
+                if record.state == 'Absolutely_Correct':
+                    knowledge_submit_count[know]['ac'] += 1
+                elif record.state == 'Partially_Correct':
+                    knowledge_submit_count[know]['partial_ac'] += 1
+                else:
+                    knowledge_submit_count[know]['error'] += 1
+        knowledge_list = []
+        for know in knowledge_submit_count:
+            knowledge_list.append({
+                'mainpoint': know,
+                'ac': knowledge_submit_count[know]['ac'],
+                'partial_ac': knowledge_submit_count[know]['partial_ac'],
+                'error': knowledge_submit_count[know]['error']
+            })
+        return JsonResponse({
+            'error': 0,
+            'msg': 'success',
+            'data': knowledge_list
+        })
+    return JsonResponse({'error': 1, 'msg': 'Invalid request method'})
+
+
 # w_{学生s对某知识点的掌握程度} = \frac{1}{n} \sum^n_{i=1} \frac{score^s_i}{max\_score_i}
 @csrf_exempt
 def student_knowledge_1(request):

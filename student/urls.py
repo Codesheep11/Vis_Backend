@@ -9,7 +9,8 @@ urlpatterns = [
     path('subpoint/mastery/<str:student_id>', student_sub_knowledge_mastery),
     path('submit/day/<str:student_id>', student_submit_day_record),
     path('submit/hour/<str:student_id>', student_submit_hour_record),
-    path('submit/<str:student_id>', student_submit_record),
+    path('submit/student/<str:student_id>', student_submit_record),
+    path('submit/total', submit_knowledge),
     # Student
     path('student/knowledge_control1', student_knowledge_1),
     path('student/knowledge_control2', student_knowledge_2),
