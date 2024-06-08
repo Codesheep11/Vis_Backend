@@ -77,7 +77,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '..\db\yxc.db',  # 替换成你的数据库文件路径
+        'NAME': 'yxc.db',  # 替换成你的数据库文件路径
     }
 }
 
