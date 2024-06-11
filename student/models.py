@@ -61,6 +61,9 @@ class StudentInfo(models.Model):
 class KnowledgeInfo(models.Model):
     knowledge = models.TextField(primary_key=True)
     title_count = models.IntegerField()
+    ac = models.IntegerField()
+    partial_ac = models.IntegerField()
+    error = models.IntegerField()
 
     class Meta:
         managed = False

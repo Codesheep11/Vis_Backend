@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     "student",
 ]
 
-
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",

@@ -272,7 +272,6 @@ def student_submit_record(request, student_id):
         sub_knowledge_submit_count = {}
         method_count = {}
         method_knowledge = {}
-        method_sub_knowledge = {}
         for record in submit_records:
             method = record.method
             knows = DataTitleinfo.objects.filter(title_id=record.title_id).values_list('knowledge', flat=True)
@@ -296,18 +295,18 @@ def student_submit_record(request, student_id):
                 method_knowledge[(method, know)] = 1
             else:
                 method_knowledge[(method, know)] += 1
-            if (method, sub_know) not in method_sub_knowledge:
-                method_sub_knowledge[(method, sub_know)] = 1
-            else:
-                method_sub_knowledge[(method, sub_know)] += 1
-        for know in knowledge_submit_count:
+        for method in method_count:
             node_list.append({
-                'name': know
+                'name': method
             })
             link_list.append({
                 'source': 'total',
-                'target': know,
-                'value': knowledge_submit_count[know]
+                'target': method,
+                'value': method_count[method]
+            })
+        for know in knowledge_submit_count:
+            node_list.append({
+                'name': know
             })
         for sub_know in sub_knowledge_submit_count:
             node_list.append({
@@ -318,26 +317,11 @@ def student_submit_record(request, student_id):
                 'target': sub_know,
                 'value': sub_knowledge_submit_count[sub_know]
             })
-        for method in method_count:
-            node_list.append({
-                'name': method
-            })
-            link_list.append({
-                'source': 'total',
-                'target': method,
-                'value': method_count[method]
-            })
         for method_know in method_knowledge:
             link_list.append({
                 'source': method_know[0],
                 'target': method_know[1],
                 'value': method_knowledge[method_know]
-            })
-        for method_sub in method_sub_knowledge:
-            link_list.append({
-                'source': method_sub[0],
-                'target': method_sub[1],
-                'value': method_sub_knowledge[method_sub]
             })
         # 返回结果
         return JsonResponse({
@@ -356,40 +340,42 @@ def student_submit_record(request, student_id):
 @csrf_exempt
 def submit_knowledge(request):
     if request.method == 'GET':
-        submit_records = DataSubmitrecord.objects.all()
-        if not submit_records.exists():
-            return JsonResponse({'error': 1, 'msg': 'No submit records'})
-        # 对于提交按学生ID分组，只保留time最大的记录
-        last_record_times = (
-            submit_records.values('student_id', 'title_id')
-            .annotate(max_time=Max('time'))
-            .values('max_time')
-        )
-        submit_records = submit_records.filter(time__in=Subquery(last_record_times))
-        # 统计submit_records中的每一条记录，计算每个knowledge的score为满分的次数，部分分的次数，以及0分的次数
-        knowledge_submit_count = {}
-        for record in submit_records:
-            knowledge = DataTitleinfo.objects.filter(title_id=record.title_id).values_list('knowledge', flat=True)
-            for know in knowledge:
-                if know not in knowledge_submit_count:
-                    knowledge_submit_count[know] = {
-                        'ac': 0,
-                        'partial_ac': 0,
-                        'error': 0
-                    }
-                if record.state == 'Absolutely_Correct':
-                    knowledge_submit_count[know]['ac'] += 1
-                elif record.state == 'Partially_Correct':
-                    knowledge_submit_count[know]['partial_ac'] += 1
-                else:
-                    knowledge_submit_count[know]['error'] += 1
+        # submit_records = DataSubmitrecord.objects.all()
+        # if not submit_records.exists():
+        #     return JsonResponse({'error': 1, 'msg': 'No submit records'})
+        # # 对于提交按学生ID分组，只保留time最大的记录
+        # last_record_times = (
+        #     submit_records.values('student_id', 'title_id')
+        #     .annotate(max_time=Max('time'))
+        #     .values('max_time')
+        # )
+        # submit_records = submit_records.filter(time__in=Subquery(last_record_times))
+        # # 统计submit_records中的每一条记录，计算每个knowledge的score为满分的次数，部分分的次数，以及0分的次数
+        # knowledge_submit_count = {}
+        # for record in submit_records:
+        #     knowledge = DataTitleinfo.objects.filter(title_id=record.title_id).values_list('knowledge', flat=True)
+        #     for know in knowledge:
+        #         if know not in knowledge_submit_count:
+        #             knowledge_submit_count[know] = {
+        #                 'ac': 0,
+        #                 'partial_ac': 0,
+        #                 'error': 0
+        #             }
+        #         if record.state == 'Absolutely_Correct':
+        #             knowledge_submit_count[know]['ac'] += 1
+        #         elif record.state == 'Partially_Correct':
+        #             knowledge_submit_count[know]['partial_ac'] += 1
+        #         else:
+        #             knowledge_submit_count[know]['error'] += 1
+
+        knowledges = KnowledgeInfo.objects.all()
         knowledge_list = []
-        for know in knowledge_submit_count:
+        for know in knowledges:
             knowledge_list.append({
-                'mainpoint': know,
-                'ac': knowledge_submit_count[know]['ac'],
-                'partial_ac': knowledge_submit_count[know]['partial_ac'],
-                'error': knowledge_submit_count[know]['error']
+                'mainpoint': know.knowledge,
+                'ac': know.ac,
+                'partial_ac': know.partial_ac,
+                'error': know.error
             })
         return JsonResponse({
             'error': 0,
