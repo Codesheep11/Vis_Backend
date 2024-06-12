@@ -291,9 +291,9 @@ def student_submit_record(request, student_id):
                 else:
                     sub_knowledge_submit_count[sub_know] += 1
             if method not in method_count:
-                method_count[method] = 1
+                method_count[method] = knows.count()
             else:
-                method_count[method] += 1
+                method_count[method] += knows.count()
         for method in method_count:
             node_list.append({
                 'name': method
