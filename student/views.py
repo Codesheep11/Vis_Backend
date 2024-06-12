@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import StudentInfo, DataSubmitrecord, DataTitleinfo, KnowledgeInfo, SubKnowledgeInfo
 from django.db.models import Max, Subquery
-import datetime
+from datetime import datetime
+
 
 
 # 返回所有学生的列表信息，包括student_id,class,以class为第一关键字，student_id为第二关键字，升序展示
@@ -384,6 +385,39 @@ def submit_knowledge(request):
     return JsonResponse({'error': 1, 'msg': 'Invalid request method'})
 
 
+def getColor(name) -> str:
+    # 如果name包含知识点，则返回知识点对应的颜色
+    if name.count('-') == 2:
+        if "r8S3g" in name:
+            return "#FACAA7"
+        if "t5V9e" in name:
+            return "#E4FAA8"
+        if "y9W5d" in name:
+            return "#7A604D"
+        if "s8Y2f" in name:
+            return "#9CA583"
+        if "m3D1v" in name:
+            return "#A7F2FA"
+        if "g7R2j" in name:
+            return "#E1A7FA"
+        if "b3C9s" in name:
+            return "#4D767A"
+        if "k4W1c" in name:
+            return "#6D4D7A"
+    switcher = {
+        "已通过-困难": "#30BF39",
+        "已通过-中等": "#40FF4C",
+        "已通过-简单": "#73FF7C",
+        "尝试中-困难": "#BF9030",
+        "尝试中-中等": "#FFC040",
+        "尝试中-简单": "#FFD173",
+        "未提交-困难": "#808080",
+        "未提交-中等": "#C0C0C0",
+        "未提交-简单": "#D3D3D3"
+    }
+    return switcher.get(name)
+
+
 # 统计每个学生
 @csrf_exempt
 def student_submit_grade(request, student_id):
@@ -411,61 +445,91 @@ def student_submit_grade(request, student_id):
         uncommited_list = [0, 0, 0, 0]
         # titles中title_id去重
         maps = {}
-
         knowledges = KnowledgeInfo.objects.all()
         for know in knowledges:
             for score in range(1, 4):
-                maps[("accepted", score, know.knowledge)] = 0
-                maps[("trying", score, know.knowledge)] = 0
-                maps[("uncommited", score, know.knowledge)] = 0
+                maps[("已通过", score, know.knowledge)] = 0
+                maps[("尝试中", score, know.knowledge)] = 0
+                maps[("未提交", score, know.knowledge)] = 0
+
+        submit_records_dict = {
+            record.title_id: record
+            for record in submit_records.order_by('-time')
+        }
+
+        # 遍历 titles，进行分类处理
         for title in titles:
             score = title.score
             if score == 4:
                 score = 3
             know = title.knowledge
-            if title.title_id in submit_records.values_list('title_id', flat=True):
-                record = submit_records.filter(title_id=title.title_id).order_by('-time')[0]
+            # 检查 title 是否在 submit_records 中
+            if title.title_id in submit_records_dict:
+                record = submit_records_dict[title.title_id]
                 if record.state == 'Absolutely_Correct':
                     ac_list[0] += 1
                     ac_list[score] += 1
-                    maps[("accepted", score, know)] += 1
+                    key = ("已通过", score, know)
                 else:
                     trying_list[0] += 1
                     trying_list[score] += 1
-                    maps[("trying", score, know)] += 1
+                    key = ("尝试中", score, know)
             else:
                 uncommited_list[0] += 1
                 uncommited_list[score] += 1
-                maps[("uncommited", score, know)] += 1
+                key = ("未提交", score, know)
+
+            if key in maps:
+                maps[key] += 1
+            else:
+                maps[key] = 1
         count1.append({
             'value': ac_list[0],
-            'name': 'accepted'
+            'name': '已通过',
+            'itemStyle': {
+                'color': '#00FF11'
+            }
         })
         count1.append({
             'value': trying_list[0],
-            'name': 'trying'
+            'name': '尝试中',
+            'itemStyle': {
+                'color': '#FFAB00'
+            }
         })
         count1.append({
             'value': uncommited_list[0],
-            'name': 'uncommited'
+            'name': '未提交',
+            'itemStyle': {
+                'color': 'A9A9A9'
+            }
         })
         switcher = {
-            1: "easy",
-            2: "normal",
-            3: "hard"
+            1: "简单",
+            2: "中等",
+            3: "困难"
         }
         for i in range(1, 4):
             count2.append({
                 'value': ac_list[i],
-                'name': 'accepted-' + switcher.get(i)
+                'name': '已通过-' + switcher.get(i),
+                'itemStyle': {
+                    'color': getColor('已通过-' + switcher.get(i))
+                }
             })
             count2.append({
                 'value': trying_list[i],
-                'name': 'trying-' + switcher.get(i)
+                'name': '尝试中-' + switcher.get(i),
+                'itemStyle': {
+                    'color': getColor('尝试中-' + switcher.get(i))
+                }
             })
             count2.append({
                 'value': uncommited_list[i],
-                'name': 'uncommited' + switcher.get(i)
+                'name': '未提交-' + switcher.get(i),
+                'itemStyle': {
+                    'color': getColor('未提交-' + switcher.get(i))
+                }
             })
         for key in maps:
             name = key[0] + "-"
@@ -473,7 +537,10 @@ def student_submit_grade(request, student_id):
             name += "-" + key[2]
             count3.append({
                 'value': maps[key],
-                'name': name
+                'name': name,
+                'itemStyle': {
+                    'color': getColor(name)
+                }
             })
         return JsonResponse({
             'error': 0,
