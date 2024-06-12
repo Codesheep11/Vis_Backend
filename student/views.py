@@ -1,11 +1,10 @@
+import datetime
 import json
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import StudentInfo, DataSubmitrecord, DataTitleinfo, KnowledgeInfo, SubKnowledgeInfo
 from django.db.models import Max, Subquery
-from datetime import datetime
-
 
 
 # 返回所有学生的列表信息，包括student_id,class,以class为第一关键字，student_id为第二关键字，升序展示
