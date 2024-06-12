@@ -385,6 +385,108 @@ def submit_knowledge(request):
     return JsonResponse({'error': 1, 'msg': 'Invalid request method'})
 
 
+# 统计每个学生
+@csrf_exempt
+def student_submit_grade(request, student_id):
+    if request.method == 'GET':
+        # 查询该学生所有提交记录
+        submit_records = DataSubmitrecord.objects.filter(student_id=student_id)
+        if not submit_records.exists():
+            return JsonResponse({'error': 1, 'msg': 'No submit records found for this student'})
+        # 对于submit_records中的每一条记录，如果有title_id相同的，保留最后一次的提交记录
+        # 使用子查询获取每个 title_id 对应的最后一次提交记录的 ID
+        last_record_times = (
+            submit_records.values('title_id')
+            .annotate(max_time=Max('time'))
+            .values('max_time')
+        )
+        # 使用获取到的时间过滤原始的 QuerySet
+        submit_records = submit_records.filter(time__in=Subquery(last_record_times))
+        # 统计每个题目在当前提交记录的状态，ac还是part_ac还是error
+        titles = DataTitleinfo.objects.all()
+        count1 = []
+        count2 = []
+        count3 = []
+        ac_list = [0, 0, 0, 0]
+        trying_list = [0, 0, 0, 0]
+        uncommited_list = [0, 0, 0, 0]
+        # titles中title_id去重
+        maps = {}
+
+        knowledges = KnowledgeInfo.objects.all()
+        for know in knowledges:
+            for score in range(1, 4):
+                maps[("accepted", score, know.knowledge)] = 0
+                maps[("trying", score, know.knowledge)] = 0
+                maps[("uncommited", score, know.knowledge)] = 0
+        for title in titles:
+            score = title.score
+            if score == 4:
+                score = 3
+            know = title.knowledge
+            if title.title_id in submit_records.values_list('title_id', flat=True):
+                record = submit_records.filter(title_id=title.title_id).order_by('-time')[0]
+                if record.state == 'Absolutely_Correct':
+                    ac_list[0] += 1
+                    ac_list[score] += 1
+                    maps[("accepted", score, know)] += 1
+                else:
+                    trying_list[0] += 1
+                    trying_list[score] += 1
+                    maps[("trying", score, know)] += 1
+            else:
+                uncommited_list[0] += 1
+                uncommited_list[score] += 1
+                maps[("uncommited", score, know)] += 1
+        count1.append({
+            'value': ac_list[0],
+            'name': 'accepted'
+        })
+        count1.append({
+            'value': trying_list[0],
+            'name': 'trying'
+        })
+        count1.append({
+            'value': uncommited_list[0],
+            'name': 'uncommited'
+        })
+        switcher = {
+            1: "easy",
+            2: "normal",
+            3: "hard"
+        }
+        for i in range(1, 4):
+            count2.append({
+                'value': ac_list[i],
+                'name': 'accepted-' + switcher.get(i)
+            })
+            count2.append({
+                'value': trying_list[i],
+                'name': 'trying-' + switcher.get(i)
+            })
+            count2.append({
+                'value': uncommited_list[i],
+                'name': 'uncommited' + switcher.get(i)
+            })
+        for key in maps:
+            name = key[0] + "-"
+            name += switcher.get(key[1])
+            name += "-" + key[2]
+            count3.append({
+                'value': maps[key],
+                'name': name
+            })
+        return JsonResponse({
+            'error': 0,
+            'msg': 'success',
+            'data': {
+                'count1': count1,
+                'count2': count2,
+                'count3': count3
+            }
+        })
+
+
 # w_{学生s对某知识点的掌握程度} = \frac{1}{n} \sum^n_{i=1} \frac{score^s_i}{max\_score_i}
 @csrf_exempt
 def student_knowledge_1(request):
