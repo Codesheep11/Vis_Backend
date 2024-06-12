@@ -281,6 +281,10 @@ def student_submit_record(request, student_id):
                     knowledge_submit_count[know] = 1
                 else:
                     knowledge_submit_count[know] += 1
+                if (method, know) not in method_knowledge:
+                    method_knowledge[(method, know)] = 1
+                else:
+                    method_knowledge[(method, know)] += 1
             for sub_know in sub_knows:
                 if sub_know not in sub_knowledge_submit_count:
                     sub_knowledge_submit_count[sub_know] = 1
@@ -290,11 +294,6 @@ def student_submit_record(request, student_id):
                 method_count[method] = 1
             else:
                 method_count[method] += 1
-
-            if (method, know) not in method_knowledge:
-                method_knowledge[(method, know)] = 1
-            else:
-                method_knowledge[(method, know)] += 1
         for method in method_count:
             node_list.append({
                 'name': method
