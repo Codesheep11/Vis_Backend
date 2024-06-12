@@ -417,7 +417,7 @@ def getColor(name) -> str:
     return switcher.get(name)
 
 
-# 统计每个学生
+# 分等级统计每个学生对应的提交
 @csrf_exempt
 def student_submit_grade(request, student_id):
     if request.method == 'GET':
@@ -445,12 +445,15 @@ def student_submit_grade(request, student_id):
         # titles中title_id去重
         maps = {}
         knowledges = KnowledgeInfo.objects.all()
-        for know in knowledges:
-            for score in range(1, 4):
+        for score in range(3, 0, -1):
+            for know in knowledges:
                 maps[("已通过", score, know.knowledge)] = 0
+        for score in range(3, 0, -1):
+            for know in knowledges:
                 maps[("尝试中", score, know.knowledge)] = 0
+        for score in range(3, 0, -1):
+            for know in knowledges:
                 maps[("未提交", score, know.knowledge)] = 0
-
         submit_records_dict = {
             record.title_id: record
             for record in submit_records.order_by('-time')
@@ -508,7 +511,7 @@ def student_submit_grade(request, student_id):
             2: "中等",
             3: "困难"
         }
-        for i in range(1, 4):
+        for i in range(3, 0, -1):
             count2.append({
                 'value': ac_list[i],
                 'name': '已通过-' + switcher.get(i),
@@ -516,6 +519,7 @@ def student_submit_grade(request, student_id):
                     'color': getColor('已通过-' + switcher.get(i))
                 }
             })
+        for i in range(3, 0, -1):
             count2.append({
                 'value': trying_list[i],
                 'name': '尝试中-' + switcher.get(i),
@@ -523,6 +527,7 @@ def student_submit_grade(request, student_id):
                     'color': getColor('尝试中-' + switcher.get(i))
                 }
             })
+        for i in range(3, 0, -1):
             count2.append({
                 'value': uncommited_list[i],
                 'name': '未提交-' + switcher.get(i),
@@ -530,6 +535,7 @@ def student_submit_grade(request, student_id):
                     'color': getColor('未提交-' + switcher.get(i))
                 }
             })
+
         for key in maps:
             name = key[0] + "-"
             name += switcher.get(key[1])
