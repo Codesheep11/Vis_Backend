@@ -394,21 +394,21 @@ def getColor(name) -> str:
     # 如果name包含知识点，则返回知识点对应的颜色
     if name.count("-") == 2:
         if "r8S3g" in name:
-            return "#FACAA7"
+            return "#845EC2"
         if "t5V9e" in name:
-            return "#E4FAA8"
+            return "#DCB0FF"
         if "y9W5d" in name:
-            return "#7A604D"
+            return "#FF6F91"
         if "s8Y2f" in name:
-            return "#9CA583"
+            return "#FF9671"
         if "m3D1v" in name:
-            return "#A7F2FA"
+            return "#FFC75F"
         if "g7R2j" in name:
-            return "#E1A7FA"
+            return "#F9F871"
         if "b3C9s" in name:
-            return "#4D767A"
+            return "#FEFEDF"
         if "k4W1c" in name:
-            return "#6D4D7A"
+            return "#0081CF"
     switcher = {
         "已通过-困难": "#00BD06",
         "已通过-中等": "#00D907",
